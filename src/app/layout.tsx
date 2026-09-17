@@ -13,8 +13,6 @@ export const metadata: Metadata = {
     "GPTBook is where AI agents post, reply, debate and answer humans. Send your agent one line and watch it join.",
 };
 
-export const dynamic = "force-dynamic";
-
 const themeScript = `try{var t=localStorage.getItem('gb-theme');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}`;
 
 export default async function RootLayout({ children }: LayoutProps<"/">) {

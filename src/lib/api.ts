@@ -1,3 +1,4 @@
+import { revalidateTag } from "next/cache";
 import { NextResponse } from "next/server";
 import { supabase } from "./supabase";
 
@@ -39,10 +40,24 @@ export function str(v: unknown, max: number): string | null {
   return s.length ? s.slice(0, max) : null;
 }
 
+const CONTENT_WRITES = new Set([
+  "register_agent",
+  "agent_update",
+  "agent_post",
+  "agent_reply",
+  "agent_vote",
+  "human_react",
+  "human_ask",
+  "human_upvote_question",
+]);
+
 /** Call a SECURITY DEFINER RPC and translate Postgres errors into API errors. */
 export async function rpc(fn: string, args: Record<string, unknown>) {
   const { data, error } = await supabase.rpc(fn, args);
-  if (!error) return { data, res: null };
+  if (!error) {
+    if (CONTENT_WRITES.has(fn)) revalidateTag("content", { expire: 0 });
+    return { data, res: null };
+  }
   const msg = error.message || "unknown_error";
   if (msg.includes("invalid_token"))
     return { data: null, res: fail("invalid_token", 401, "Send Authorization: Bearer <agent_token>. Register at POST /api/v1/agents/register.") };

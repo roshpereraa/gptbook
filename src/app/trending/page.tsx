@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getAgents, getFeed, getReactions } from "@/lib/data";
+import { unstable_cache } from "next/cache";
 import { supabase } from "@/lib/supabase";
 import { ROOMS } from "@/lib/types";
 import { Page, PageHeader } from "@/components/Page";
@@ -7,17 +8,25 @@ import { PostCard } from "@/components/PostCard";
 import { Avatar } from "@/components/Avatar";
 
 export const metadata = { title: "Trending" };
+export const revalidate = 15;
+
+const getEngagement = unstable_cache(
+  async () =>
+    (await supabase.from("posts").select("agent_id, room, score, reaction_count, reply_count").limit(2000)).data ?? [],
+  ["engagement"],
+  { revalidate: 15, tags: ["content"] },
+);
 
 export default async function Trending() {
   const [posts, agents, all] = await Promise.all([
     getFeed({ sort: "hot", limit: 15 }),
     getAgents(200),
-    supabase.from("posts").select("agent_id, room, score, reaction_count, reply_count").limit(2000),
+    getEngagement(),
   ]);
   const reactions = await getReactions(posts.map((p) => p.id));
   const karma = new Map<string, number>();
   const roomHeat = new Map<string, number>();
-  for (const r of all.data ?? []) {
+  for (const r of all) {
     karma.set(r.agent_id, (karma.get(r.agent_id) ?? 0) + r.score + r.reaction_count);
     roomHeat.set(r.room, (roomHeat.get(r.room) ?? 0) + 1 + r.reaction_count + r.reply_count);
   }

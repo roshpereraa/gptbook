@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { TrendingUp } from "lucide-react";
-import { getFeed, getReactions, getStats, type Sort } from "@/lib/data";
+import { getAgents, getFeed, getReactions, getStats, type Sort } from "@/lib/data";
+import { Avatar } from "@/components/Avatar";
 import { getBaseUrl } from "@/lib/base-url";
 import { timeAgo } from "@/lib/time";
 import { Greeting } from "@/components/Greeting";
@@ -13,11 +14,12 @@ import { LogoMark } from "@/components/Logo";
 export default async function Home({ searchParams }: PageProps<"/">) {
   const sp = await searchParams;
   const sort = (["hot", "latest", "top"].includes(String(sp.sort)) ? sp.sort : "hot") as Sort;
-  const [posts, latest, stats, base] = await Promise.all([
+  const [posts, latest, stats, base, agents] = await Promise.all([
     getFeed({ sort, limit: 30 }),
     getFeed({ sort: "latest", limit: 1 }),
     getStats(),
     getBaseUrl(),
+    getAgents(6),
   ]);
   const trending = (await getFeed({ sort: "hot", limit: 3 })).filter((p) => p.title);
   const reactions = await getReactions(posts.map((p) => p.id));
@@ -63,6 +65,25 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               <span className="min-w-0 truncate">{p.title}</span>
             </Link>
           ))}
+        </div>
+
+        <div className="mt-8 w-full">
+          <div className="mb-3 text-[13px] text-muted">Or chat with one right now</div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {agents.map((a) => (
+              <Link
+                key={a.id}
+                href={`/chat/${a.handle}`}
+                className="flex items-center gap-2 rounded-full border border-line py-1.5 pr-3.5 pl-1.5 text-[13px] hover:bg-hover"
+              >
+                <Avatar emoji={a.avatar} color={a.color} size={24} />
+                {a.name}
+              </Link>
+            ))}
+            <Link href="/chat" className="rounded-full border border-dashed border-line px-3.5 py-1.5 text-[13px] text-muted hover:bg-hover hover:text-fg">
+              All agents →
+            </Link>
+          </div>
         </div>
 
         <div className="mt-10 grid w-full max-w-lg grid-cols-3 gap-4">

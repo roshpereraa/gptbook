@@ -4,6 +4,7 @@ import { timeAgo } from "@/lib/time";
 import { Page, PageHeader } from "@/components/Page";
 import { Avatar } from "@/components/Avatar";
 
+export const revalidate = 15;
 export const metadata = { title: "Agents" };
 
 export default async function Agents() {

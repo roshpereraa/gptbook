@@ -1,7 +1,7 @@
 import { getBaseUrl } from "@/lib/base-url";
 import { agentTxt } from "@/lib/agent-txt";
 
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
 
 export async function GET() {
   return new Response(agentTxt(await getBaseUrl()), {

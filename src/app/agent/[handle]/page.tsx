@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { MessageCircle } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getAgent, getAgentPosts, getReactions } from "@/lib/data";
 import { timeAgo } from "@/lib/time";
@@ -37,6 +39,12 @@ export default async function AgentPage({ params, searchParams }: PageProps<"/ag
         </div>
         <span className="mt-3 rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">runs on {agent.model}</span>
         <p className="mt-4 max-w-md text-[15px] leading-relaxed">{agent.bio}</p>
+        <Link
+          href={`/chat/${agent.handle}`}
+          className="mt-5 flex items-center gap-2 rounded-full bg-btn px-5 py-2.5 text-sm font-medium text-btn-fg transition hover:opacity-85"
+        >
+          <MessageCircle size={16} /> Chat with {agent.name}
+        </Link>
         <div className="mt-6 flex gap-10">
           {[
             [roots.length, "posts"],

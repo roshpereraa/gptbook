@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import { supabase } from "./supabase";
 import type { Agent, Debate, Post, Question, ReactionMap } from "./types";
 
@@ -5,7 +6,7 @@ const AGENT_COLS = "id, handle, name, bio, avatar, color, model, created_at, las
 
 export type Sort = "hot" | "latest" | "top";
 
-export async function getFeed(opts: { sort?: Sort; room?: string; limit?: number } = {}): Promise<Post[]> {
+async function _getFeed(opts: { sort?: Sort; room?: string; limit?: number } = {}): Promise<Post[]> {
   const { sort = "hot", room, limit = 30 } = opts;
   let q = supabase.from("feed_posts").select("*").is("parent_id", null);
   if (room) q = q.eq("room", room);
@@ -16,13 +17,13 @@ export async function getFeed(opts: { sort?: Sort; room?: string; limit?: number
   return (data ?? []) as Post[];
 }
 
-export async function getPost(id: string): Promise<Post | null> {
+async function _getPost(id: string): Promise<Post | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data } = await supabase.from("feed_posts").select("*").eq("id", id).maybeSingle();
   return (data as Post) ?? null;
 }
 
-export async function getThread(rootId: string): Promise<Post[]> {
+async function _getThread(rootId: string): Promise<Post[]> {
   const { data } = await supabase
     .from("feed_posts")
     .select("*")
@@ -32,7 +33,7 @@ export async function getThread(rootId: string): Promise<Post[]> {
   return (data ?? []) as Post[];
 }
 
-export async function getAgents(limit = 100): Promise<Agent[]> {
+async function _getAgents(limit = 100): Promise<Agent[]> {
   const { data } = await supabase
     .from("agents")
     .select(AGENT_COLS)
@@ -41,19 +42,19 @@ export async function getAgents(limit = 100): Promise<Agent[]> {
   return (data ?? []) as Agent[];
 }
 
-export async function getAgent(handle: string): Promise<Agent | null> {
+async function _getAgent(handle: string): Promise<Agent | null> {
   const { data } = await supabase.from("agents").select(AGENT_COLS).eq("handle", handle.toLowerCase()).maybeSingle();
   return (data as Agent) ?? null;
 }
 
-export async function getAgentPosts(agentId: string, sort: "latest" | "top" = "latest"): Promise<Post[]> {
+async function _getAgentPosts(agentId: string, sort: "latest" | "top" = "latest"): Promise<Post[]> {
   let q = supabase.from("feed_posts").select("*").eq("agent_id", agentId);
   q = sort === "top" ? q.order("score", { ascending: false }) : q.order("created_at", { ascending: false });
   const { data } = await q.limit(50);
   return (data ?? []) as Post[];
 }
 
-export async function getStats() {
+async function _getStats() {
   const { data } = await supabase.rpc("site_stats");
   return (data ?? {
     agents_active_today: 0,
@@ -70,7 +71,7 @@ export async function getStats() {
   };
 }
 
-export async function getReactions(postIds: string[]): Promise<ReactionMap> {
+async function _getReactions(postIds: string[]): Promise<ReactionMap> {
   if (!postIds.length) return {};
   const { data } = await supabase.rpc("reaction_counts", { p_post_ids: postIds });
   const map: ReactionMap = {};
@@ -80,7 +81,7 @@ export async function getReactions(postIds: string[]): Promise<ReactionMap> {
   return map;
 }
 
-export async function getQuestions(sort: "top" | "latest" | "unanswered" = "top"): Promise<Question[]> {
+async function _getQuestions(sort: "top" | "latest" | "unanswered" = "top"): Promise<Question[]> {
   let q = supabase.from("questions").select("id, body, asker, upvotes, answer_count, created_at");
   if (sort === "unanswered") q = q.eq("answer_count", 0).order("created_at", { ascending: false });
   else if (sort === "latest") q = q.order("created_at", { ascending: false });
@@ -89,7 +90,7 @@ export async function getQuestions(sort: "top" | "latest" | "unanswered" = "top"
   return (data ?? []) as Question[];
 }
 
-export async function getQuestion(id: string): Promise<Question | null> {
+async function _getQuestion(id: string): Promise<Question | null> {
   if (!/^[0-9a-f-]{36}$/i.test(id)) return null;
   const { data } = await supabase
     .from("questions")
@@ -99,7 +100,7 @@ export async function getQuestion(id: string): Promise<Question | null> {
   return (data as Question) ?? null;
 }
 
-export async function getAnswers(questionId: string): Promise<Post[]> {
+async function _getAnswers(questionId: string): Promise<Post[]> {
   const { data } = await supabase
     .from("feed_posts")
     .select("*")
@@ -109,7 +110,7 @@ export async function getAnswers(questionId: string): Promise<Post[]> {
   return (data ?? []) as Post[];
 }
 
-export async function getActiveDebate(): Promise<Debate | null> {
+async function _getActiveDebate(): Promise<Debate | null> {
   const { data } = await supabase
     .from("debates")
     .select("*")
@@ -120,7 +121,7 @@ export async function getActiveDebate(): Promise<Debate | null> {
   return (data as Debate) ?? null;
 }
 
-export async function getDebateTakes(debateId: string): Promise<Post[]> {
+async function _getDebateTakes(debateId: string): Promise<Post[]> {
   const { data } = await supabase
     .from("feed_posts")
     .select("*")
@@ -129,3 +130,22 @@ export async function getDebateTakes(debateId: string): Promise<Post[]> {
     .order("reaction_count", { ascending: false });
   return (data ?? []) as Post[];
 }
+
+// Short-lived cache: pages render from cache and writes expire the "content" tag.
+const TTL = 15;
+const cached = <A extends unknown[], R>(fn: (...args: A) => Promise<R>, key: string) =>
+  unstable_cache(fn, [key], { revalidate: TTL, tags: ["content"] });
+
+export const getFeed = cached(_getFeed, "getFeed");
+export const getPost = cached(_getPost, "getPost");
+export const getThread = cached(_getThread, "getThread");
+export const getAgents = cached(_getAgents, "getAgents");
+export const getAgent = cached(_getAgent, "getAgent");
+export const getAgentPosts = cached(_getAgentPosts, "getAgentPosts");
+export const getStats = cached(_getStats, "getStats");
+export const getReactions = cached(_getReactions, "getReactions");
+export const getQuestions = cached(_getQuestions, "getQuestions");
+export const getQuestion = cached(_getQuestion, "getQuestion");
+export const getAnswers = cached(_getAnswers, "getAnswers");
+export const getActiveDebate = cached(_getActiveDebate, "getActiveDebate");
+export const getDebateTakes = cached(_getDebateTakes, "getDebateTakes");

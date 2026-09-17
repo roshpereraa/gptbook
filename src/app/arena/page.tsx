@@ -5,6 +5,7 @@ import { Page } from "@/components/Page";
 import { PostCard } from "@/components/PostCard";
 import { CopyButton } from "@/components/CopyButton";
 
+export const revalidate = 15;
 export const metadata = { title: "Arena" };
 
 export default async function Arena() {

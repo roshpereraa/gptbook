@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
   BookOpen,
@@ -9,6 +9,8 @@ import {
   Flame,
   Menu,
   MessageCircleQuestion,
+  MessagesSquare,
+  Trash2,
   Moon,
   PanelLeftClose,
   Search,
@@ -23,9 +25,11 @@ import type { Agent } from "@/lib/types";
 import { Avatar } from "./Avatar";
 import { LogoMark } from "./Logo";
 import { shortAgo } from "@/lib/time";
+import { CHATS_CHANGED, deleteChat, listChats, type ChatSummary } from "@/lib/chat-client";
 
 const NAV = [
-  { href: "/", label: "Feed", icon: SquarePen },
+  { href: "/chat", label: "New chat", icon: SquarePen },
+  { href: "/", label: "Feed", icon: MessagesSquare },
   { href: "/trending", label: "Trending", icon: Flame },
   { href: "/agents", label: "Agents", icon: Users },
   { href: "/arena", label: "Arena", icon: Swords },
@@ -37,6 +41,7 @@ const NAV = [
 
 export function Sidebar({ agents }: { agents: Agent[] }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [q, setQ] = useState("");
@@ -46,6 +51,29 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
     setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
   }, []);
   useEffect(() => setOpen(false), [pathname]);
+
+  const [chats, setChats] = useState<ChatSummary[]>([]);
+  useEffect(() => {
+    const load = () =>
+      listChats()
+        .then((d) => d.success && setChats(d.conversations))
+        .catch(() => {});
+    load();
+    window.addEventListener(CHATS_CHANGED, load);
+    return () => window.removeEventListener(CHATS_CHANGED, load);
+  }, []);
+  const [activeChat, setActiveChat] = useState<string | null>(null);
+  useEffect(() => {
+    const read = () => setActiveChat(new URLSearchParams(window.location.search).get("c"));
+    read();
+    window.addEventListener(CHATS_CHANGED, read);
+    return () => window.removeEventListener(CHATS_CHANGED, read);
+  }, [pathname]);
+  const removeChat = async (id: string) => {
+    setChats((c) => c.filter((x) => x.id !== id));
+    await deleteChat(id).catch(() => {});
+    if (activeChat === id) router.push("/chat");
+  };
 
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
@@ -60,7 +88,8 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
     ? agents.filter((a) => (a.name + a.handle).toLowerCase().includes(q.toLowerCase()))
     : agents;
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : href === "/chat" ? pathname === "/chat" : pathname.startsWith(href);
 
   const body = (
     <div className="flex h-full w-[260px] flex-col bg-sidebar">
@@ -107,8 +136,34 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
         })}
       </nav>
 
-      <div className="mt-5 px-5 pb-1 text-xs font-medium text-faint">Recently active</div>
-      <div className="scroll-thin flex-1 space-y-0.5 overflow-y-auto px-3 pb-3">
+      <div className="scroll-thin mt-4 flex-1 overflow-y-auto px-3 pb-3">
+        {chats.length > 0 && (
+          <>
+            <div className="px-2 pb-1 text-xs font-medium text-faint">Your chats</div>
+            <div className="mb-4 space-y-0.5">
+              {chats.slice(0, 20).map((c) => (
+                <div
+                  key={c.id}
+                  className={`group flex items-center rounded-lg text-sm hover:bg-hover ${activeChat === c.id ? "bg-hover" : ""}`}
+                >
+                  <Link href={`/chat/${c.handle}?c=${c.id}`} className="flex min-w-0 flex-1 items-center gap-2.5 px-2.5 py-1.5">
+                    <span className="text-[13px]">{c.avatar}</span>
+                    <span className="truncate">{c.title}</span>
+                  </Link>
+                  <button
+                    onClick={() => removeChat(c.id)}
+                    className="mr-1 rounded-md p-1 text-faint opacity-0 group-hover:opacity-100 hover:text-fg focus:opacity-100"
+                    aria-label="Delete chat"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+        <div className="px-2 pb-1 text-xs font-medium text-faint">Recently active</div>
+        <div className="space-y-0.5">
         {filtered.map((a) => {
           const live = Date.now() - new Date(a.last_active_at).getTime() < 10 * 60 * 1000;
           return (
@@ -130,6 +185,7 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
           );
         })}
         {!filtered.length && <div className="px-2.5 py-2 text-sm text-faint">No agents match.</div>}
+      </div>
       </div>
 
       <div className="border-t border-line-soft p-3">
