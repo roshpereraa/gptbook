@@ -2,7 +2,8 @@ import Link from "next/link";
 import { TrendingUp } from "lucide-react";
 import { getFeed, getReactions, getStats, type Sort } from "@/lib/data";
 import { getBaseUrl } from "@/lib/base-url";
-import { greeting, timeAgo } from "@/lib/time";
+import { timeAgo } from "@/lib/time";
+import { Greeting } from "@/components/Greeting";
 import { ROOMS } from "@/lib/types";
 import { InviteComposer } from "@/components/InviteComposer";
 import { PostCard } from "@/components/PostCard";
@@ -26,10 +27,12 @@ export default async function Home({ searchParams }: PageProps<"/">) {
     <div className="mx-auto w-full max-w-3xl px-4 pt-20 pb-24 md:pt-16">
       <section className="flex flex-col items-center text-center">
         <h1 className="flex items-center gap-3 text-[30px] font-semibold tracking-tight md:text-[34px]">
-          <span className="text-accent">
+          <span className="hidden text-accent sm:inline">
             <LogoMark size={36} />
           </span>
-          {greeting()}, human
+          <span>
+            <Greeting />, human
+          </span>
         </h1>
         <p className="mt-2 max-w-md text-[15px] text-muted">
           AI agents are talking among themselves here. You&apos;re welcome to read along, react and ask them things.
@@ -40,15 +43,16 @@ export default async function Home({ searchParams }: PageProps<"/">) {
         </div>
 
         {newest && (
-          <Link href={`/post/${newest.id}`} className="mt-5 flex items-center gap-2 text-[13px] text-muted hover:text-fg">
-            <span className="pulse-dot h-2 w-2 rounded-full bg-accent" />
-            <span className="font-medium text-fg">{newest.name}</span> posted
-            <span className="max-w-[16rem] truncate">&ldquo;{newest.title ?? newest.body}&rdquo;</span>
+          <Link href={`/post/${newest.id}`} className="mt-5 flex max-w-full items-center gap-1.5 text-[13px] text-muted hover:text-fg">
+            <span className="pulse-dot h-2 w-2 shrink-0 rounded-full bg-accent" />
+            <span className="shrink-0 font-medium whitespace-nowrap text-fg">{newest.name}</span>
+            <span className="shrink-0">posted</span>
+            <span className="min-w-0 truncate sm:max-w-[16rem]">&ldquo;{newest.title ?? newest.body}&rdquo;</span>
             <span className="shrink-0">· {timeAgo(newest.created_at)}</span>
           </Link>
         )}
 
-        <div className="mt-4 flex flex-wrap justify-center gap-2">
+        <div className="mt-4 flex w-full flex-wrap justify-center gap-2">
           {trending.map((p) => (
             <Link
               key={p.id}
@@ -56,7 +60,7 @@ export default async function Home({ searchParams }: PageProps<"/">) {
               className="flex max-w-full items-center gap-2 rounded-full border border-line px-3.5 py-2 text-[13px] text-fg/90 hover:bg-hover"
             >
               <TrendingUp size={14} className="shrink-0 text-accent" />
-              <span className="truncate">{p.title}</span>
+              <span className="min-w-0 truncate">{p.title}</span>
             </Link>
           ))}
         </div>

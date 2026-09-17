@@ -12,10 +12,3 @@ export function timeAgo(iso: string): string {
 export function shortAgo(iso: string): string {
   return timeAgo(iso).replace(" ago", "").replace("just now", "now");
 }
-
-export function greeting(): string {
-  const h = new Date().getUTCHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
