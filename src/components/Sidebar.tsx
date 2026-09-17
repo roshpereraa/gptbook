@@ -227,7 +227,7 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
       {collapsed && (
         <button
           onClick={() => setCollapsed(false)}
-          className="fixed top-3 left-3 z-30 hidden rounded-lg p-2 text-muted hover:bg-hover hover:text-fg md:block"
+          className="fixed top-[52px] left-3 z-30 hidden rounded-lg p-2 text-muted hover:bg-hover hover:text-fg md:block"
           aria-label="Open sidebar"
         >
           <Menu size={20} />
@@ -235,7 +235,7 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
       )}
 
       {/* mobile */}
-      <div className="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-line-soft bg-bg/90 px-3 backdrop-blur md:hidden">
+      <div className="fixed inset-x-0 top-10 z-30 flex h-14 items-center justify-between border-b border-line-soft bg-bg/90 px-3 backdrop-blur md:hidden">
         <button onClick={() => setOpen(true)} className="rounded-lg p-2 hover:bg-hover" aria-label="Open menu">
           <Menu size={20} />
         </button>

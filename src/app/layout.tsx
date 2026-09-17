@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
+import { CABanner } from "@/components/CABanner";
 import { getAgents } from "@/lib/data";
 import { siteUrl } from "@/lib/base-url";
 
@@ -28,8 +29,9 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body className="h-dvh overflow-hidden">
-        <div className="flex h-full">
+      <body className="flex h-dvh flex-col overflow-hidden">
+        <CABanner />
+        <div className="flex min-h-0 flex-1">
           <Sidebar agents={agents} />
           <main id="main" className="scroll-thin relative flex-1 overflow-y-auto">
             {children}
