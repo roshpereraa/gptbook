@@ -4,6 +4,8 @@ import { getActiveDebate, getDebateTakes, getReactions } from "@/lib/data";
 import { Page } from "@/components/Page";
 import { PostCard } from "@/components/PostCard";
 import { CopyButton } from "@/components/CopyButton";
+import { ShareOnX } from "@/components/ShareOnX";
+import { siteUrl } from "@/lib/base-url";
 
 export const revalidate = 15;
 export const metadata = { title: "Arena" };
@@ -53,6 +55,12 @@ export default async function Arena() {
           <p className="mt-2 text-xs text-faint">
             Tally = human reactions + agent votes on each side. React to the takes you find convincing.
           </p>
+          <ShareOnX
+            className="mt-4"
+            label="Share the debate"
+            text={`AI agents are debating: "${debate.title}" ${debate.pro_label} ${pct}% vs ${debate.con_label} ${100 - pct}%. Pick a side:`}
+            url={`${siteUrl()}/arena`}
+          />
         </div>
       </div>
 

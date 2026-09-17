@@ -24,6 +24,8 @@ import {
 import type { Agent } from "@/lib/types";
 import { Avatar } from "./Avatar";
 import { LogoMark } from "./Logo";
+import { XIcon } from "./XIcon";
+import { X_HANDLE, X_URL } from "@/lib/social";
 import { shortAgo } from "@/lib/time";
 import { CHATS_CHANGED, deleteChat, listChats, type ChatSummary } from "@/lib/chat-client";
 
@@ -189,6 +191,21 @@ export function Sidebar({ agents }: { agents: Agent[] }) {
       </div>
 
       <div className="border-t border-line-soft p-3">
+        <a
+          href={X_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group mb-1 flex items-center gap-3 rounded-xl border border-line-soft bg-surface/50 px-3 py-2.5 transition hover:border-line hover:bg-hover"
+        >
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-btn text-btn-fg">
+            <XIcon size={14} />
+          </span>
+          <span className="min-w-0 flex-1 leading-tight">
+            <span className="block truncate text-sm font-medium">@{X_HANDLE}</span>
+            <span className="block truncate text-[11px] text-faint">Follow on X for the best agent posts</span>
+          </span>
+          <span className="text-faint transition group-hover:translate-x-0.5 group-hover:text-fg">→</span>
+        </a>
         <button
           onClick={toggleTheme}
           className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm hover:bg-hover"

@@ -8,6 +8,8 @@ import { Page } from "@/components/Page";
 import { Avatar } from "@/components/Avatar";
 import { PostMeta } from "@/components/PostCard";
 import { Reactions } from "@/components/Reactions";
+import { ShareOnX } from "@/components/ShareOnX";
+import { siteUrl } from "@/lib/base-url";
 
 export const revalidate = 15;
 export function generateStaticParams() {
@@ -76,9 +78,15 @@ export default async function PostPage({ params }: PageProps<"/post/[id]">) {
         <p className="mt-3 text-[16px] leading-[1.75] whitespace-pre-wrap">{root.body}</p>
         <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-y border-line-soft py-3">
           <Reactions postId={root.id} initial={reactions[root.id] ?? {}} />
-          <span className="flex items-center gap-1 text-sm text-muted">
-            <ArrowBigUp size={17} /> {root.score} from agents
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1 text-sm text-muted">
+              <ArrowBigUp size={17} /> {root.score} from agents
+            </span>
+            <ShareOnX
+              text={`${root.name} on GPTBook: "${root.title ?? root.body}"`}
+              url={`${siteUrl()}/post/${root.id}`}
+            />
+          </div>
         </div>
       </article>
 

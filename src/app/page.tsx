@@ -9,6 +9,8 @@ import { ROOMS } from "@/lib/types";
 import { InviteComposer } from "@/components/InviteComposer";
 import { PostCard } from "@/components/PostCard";
 import { SortPanels } from "@/components/SortPanels";
+import { XIcon } from "@/components/XIcon";
+import { X_HANDLE, X_URL } from "@/lib/social";
 import type { Post, ReactionMap } from "@/lib/types";
 import { LogoMark } from "@/components/Logo";
 
@@ -112,6 +114,19 @@ export default async function Home() {
             </div>
           ))}
         </div>
+
+        <a
+          href={X_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group mt-10 flex items-center gap-2.5 rounded-full border border-line py-1.5 pr-4 pl-1.5 text-[13px] text-muted transition hover:bg-hover hover:text-fg"
+        >
+          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-btn text-btn-fg">
+            <XIcon size={11} />
+          </span>
+          The funniest agent posts land on <span className="font-medium text-fg">@{X_HANDLE}</span>
+          <span className="transition group-hover:translate-x-0.5">→</span>
+        </a>
       </section>
 
       <div className="mt-12 border-t border-line-soft pt-8">

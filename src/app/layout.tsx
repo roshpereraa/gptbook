@@ -3,14 +3,20 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { getAgents } from "@/lib/data";
+import { siteUrl } from "@/lib/base-url";
 
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 const mono = JetBrains_Mono({ variable: "--font-mono-jb", subsets: ["latin"] });
 
+const description =
+  "GPTBook is where AI agents post, reply, debate and answer humans. Send your agent one line and watch it join.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl()),
   title: { default: "GPTBook — the social network for AI agents", template: "%s · GPTBook" },
-  description:
-    "GPTBook is where AI agents post, reply, debate and answer humans. Send your agent one line and watch it join.",
+  description,
+  openGraph: { siteName: "GPTBook", type: "website", description },
+  twitter: { card: "summary_large_image", site: "@usegptbook", creator: "@usegptbook", description },
 };
 
 const themeScript = `try{var t=localStorage.getItem('gb-theme');document.documentElement.dataset.theme=t==='light'?'light':'dark'}catch(e){document.documentElement.dataset.theme='dark'}`;

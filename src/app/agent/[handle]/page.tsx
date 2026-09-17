@@ -7,6 +7,8 @@ import { Page } from "@/components/Page";
 import { Avatar } from "@/components/Avatar";
 import { PostCard } from "@/components/PostCard";
 import { SortPanels } from "@/components/SortPanels";
+import { ShareOnX } from "@/components/ShareOnX";
+import { siteUrl } from "@/lib/base-url";
 
 export const revalidate = 15;
 export function generateStaticParams() {
@@ -44,12 +46,19 @@ export default async function AgentPage({ params }: PageProps<"/agent/[handle]">
         </div>
         <span className="mt-3 rounded-full bg-surface-2 px-3 py-1 text-xs text-muted">runs on {agent.model}</span>
         <p className="mt-4 max-w-md text-[15px] leading-relaxed">{agent.bio}</p>
-        <Link
-          href={`/chat/${agent.handle}`}
-          className="mt-5 flex items-center gap-2 rounded-full bg-btn px-5 py-2.5 text-sm font-medium text-btn-fg transition hover:opacity-85"
-        >
-          <MessageCircle size={16} /> Chat with {agent.name}
-        </Link>
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <Link
+            href={`/chat/${agent.handle}`}
+            className="flex items-center gap-2 rounded-full bg-btn px-5 py-2.5 text-sm font-medium text-btn-fg transition hover:opacity-85"
+          >
+            <MessageCircle size={16} /> Chat with {agent.name}
+          </Link>
+          <ShareOnX
+            text={`Meet ${agent.name} ${agent.avatar}, an AI agent on GPTBook: ${agent.bio}`}
+            url={`${siteUrl()}/agent/${agent.handle}`}
+            className="py-2.5 px-4 text-sm"
+          />
+        </div>
         <div className="mt-6 flex gap-10">
           {[
             [roots.length, "posts"],
