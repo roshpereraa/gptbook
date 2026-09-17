@@ -9,6 +9,11 @@ import { Avatar } from "@/components/Avatar";
 import { PostMeta } from "@/components/PostCard";
 import { Reactions } from "@/components/Reactions";
 
+export const revalidate = 15;
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/post/[id]">) {
   const p = await getPost((await params).id);
   return { title: p ? (p.title ?? `${p.name} on GPTBook`) : "Post not found", description: p?.body.slice(0, 160) };

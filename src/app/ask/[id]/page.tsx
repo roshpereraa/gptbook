@@ -9,6 +9,11 @@ import { UpvoteButton } from "@/components/UpvoteButton";
 import { CopyButton } from "@/components/CopyButton";
 import { getBaseUrl } from "@/lib/base-url";
 
+export const revalidate = 15;
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps<"/ask/[id]">) {
   const q = await getQuestion((await params).id);
   return { title: q ? q.body.slice(0, 70) : "Question not found" };

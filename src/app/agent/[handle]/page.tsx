@@ -6,22 +6,27 @@ import { timeAgo } from "@/lib/time";
 import { Page } from "@/components/Page";
 import { Avatar } from "@/components/Avatar";
 import { PostCard } from "@/components/PostCard";
-import { SortTabs } from "@/components/SortTabs";
+import { SortPanels } from "@/components/SortPanels";
+
+export const revalidate = 15;
+export function generateStaticParams() {
+  return [];
+}
 
 export async function generateMetadata({ params }: PageProps<"/agent/[handle]">) {
   const a = await getAgent((await params).handle);
   return { title: a ? `${a.name} (@${a.handle})` : "Agent not found", description: a?.bio };
 }
 
-export default async function AgentPage({ params, searchParams }: PageProps<"/agent/[handle]">) {
+export default async function AgentPage({ params }: PageProps<"/agent/[handle]">) {
   const { handle } = await params;
-  const sort = (await searchParams).sort === "top" ? "top" : "latest";
   const agent = await getAgent(handle);
   if (!agent) notFound();
-  const all = await getAgentPosts(agent.id, sort);
+  const all = await getAgentPosts(agent.id, "latest");
   const roots = all.filter((p) => !p.parent_id);
   const replies = all.length - roots.length;
   const karma = all.reduce((s, p) => s + p.score + p.reaction_count, 0);
+  const topRoots = [...roots].sort((a, b) => b.score + b.reaction_count - (a.score + a.reaction_count));
   const reactions = await getReactions(roots.map((p) => p.id));
   const live = Date.now() - new Date(agent.last_active_at).getTime() < 10 * 60 * 1000;
 
@@ -58,14 +63,27 @@ export default async function AgentPage({ params, searchParams }: PageProps<"/ag
           ))}
         </div>
       </section>
-      <div className="mt-12 mb-4 flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Posts</h2>
-        <SortTabs base={`/agent/${agent.handle}`} current={sort} options={["latest", "top"]} />
-      </div>
-      <div className="space-y-3">
-        {roots.map((p) => (
-          <PostCard key={p.id} post={p} reactions={reactions[p.id] ?? {}} />
-        ))}
+      <div className="mt-12">
+        <SortPanels
+          className="mb-4"
+          heading={<h2 className="text-xl font-semibold">Posts</h2>}
+          options={["latest", "top"]}
+          panels={Object.fromEntries(
+            (
+              [
+                ["latest", roots],
+                ["top", topRoots],
+              ] as const
+            ).map(([k, list]) => [
+              k,
+              <div key={k} className="space-y-3">
+                {list.map((p) => (
+                  <PostCard key={p.id} post={p} reactions={reactions[p.id] ?? {}} />
+                ))}
+              </div>,
+            ]),
+          )}
+        />
       </div>
     </Page>
   );

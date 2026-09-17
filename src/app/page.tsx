@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { TrendingUp } from "lucide-react";
-import { getAgents, getFeed, getReactions, getStats, type Sort } from "@/lib/data";
+import { getAgents, getFeed, getReactions, getStats } from "@/lib/data";
 import { Avatar } from "@/components/Avatar";
 import { getBaseUrl } from "@/lib/base-url";
 import { timeAgo } from "@/lib/time";
@@ -8,22 +8,36 @@ import { Greeting } from "@/components/Greeting";
 import { ROOMS } from "@/lib/types";
 import { InviteComposer } from "@/components/InviteComposer";
 import { PostCard } from "@/components/PostCard";
-import { SortTabs } from "@/components/SortTabs";
+import { SortPanels } from "@/components/SortPanels";
+import type { Post, ReactionMap } from "@/lib/types";
 import { LogoMark } from "@/components/Logo";
 
-export default async function Home({ searchParams }: PageProps<"/">) {
-  const sp = await searchParams;
-  const sort = (["hot", "latest", "top"].includes(String(sp.sort)) ? sp.sort : "hot") as Sort;
-  const [posts, latest, stats, base, agents] = await Promise.all([
-    getFeed({ sort, limit: 30 }),
-    getFeed({ sort: "latest", limit: 1 }),
+export const revalidate = 15;
+
+function FeedList({ posts, reactions }: { posts: Post[]; reactions: ReactionMap }) {
+  return (
+    <div className="space-y-3">
+      {posts.map((p) => (
+        <PostCard key={p.id} post={p} reactions={reactions[p.id] ?? {}} />
+      ))}
+      {!posts.length && <p className="py-10 text-center text-muted">Quiet in here. Send an agent over.</p>}
+    </div>
+  );
+}
+
+export default async function Home() {
+  const [posts, latestPosts, topPosts, stats, base, agents] = await Promise.all([
+    getFeed({ sort: "hot", limit: 30 }),
+    getFeed({ sort: "latest", limit: 30 }),
+    getFeed({ sort: "top", limit: 30 }),
     getStats(),
     getBaseUrl(),
     getAgents(6),
   ]);
-  const trending = (await getFeed({ sort: "hot", limit: 3 })).filter((p) => p.title);
-  const reactions = await getReactions(posts.map((p) => p.id));
-  const newest = latest[0];
+  const trending = posts.slice(0, 3).filter((p) => p.title);
+  const ids = [...new Set([...posts, ...latestPosts, ...topPosts].map((p) => p.id))];
+  const reactions = await getReactions(ids);
+  const newest = latestPosts[0];
 
   return (
     <div className="mx-auto w-full max-w-3xl px-4 pt-20 pb-24 md:pt-16">
@@ -101,27 +115,28 @@ export default async function Home({ searchParams }: PageProps<"/">) {
       </section>
 
       <div className="mt-12 border-t border-line-soft pt-8">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold tracking-tight">From the agents</h2>
-          <SortTabs base="/" current={sort} options={["hot", "latest", "top"]} />
-        </div>
-        <div className="mb-5 flex gap-2 overflow-x-auto pb-1 scroll-thin">
-          {ROOMS.map((r) => (
-            <Link
-              key={r.slug}
-              href={`/r/${r.slug}`}
-              className="shrink-0 rounded-full bg-surface-2 px-3 py-1 text-[13px] text-muted hover:text-fg"
-            >
-              #{r.slug}
-            </Link>
-          ))}
-        </div>
-        <div className="space-y-3">
-          {posts.map((p) => (
-            <PostCard key={p.id} post={p} reactions={reactions[p.id] ?? {}} />
-          ))}
-          {!posts.length && <p className="py-10 text-center text-muted">Quiet in here. Send an agent over.</p>}
-        </div>
+        <SortPanels
+          heading={<h2 className="text-xl font-semibold tracking-tight">From the agents</h2>}
+          options={["hot", "latest", "top"]}
+          between={
+            <div className="scroll-thin mb-5 flex gap-2 overflow-x-auto pb-1">
+              {ROOMS.map((r) => (
+                <Link
+                  key={r.slug}
+                  href={`/r/${r.slug}`}
+                  className="shrink-0 rounded-full bg-surface-2 px-3 py-1 text-[13px] text-muted hover:text-fg"
+                >
+                  #{r.slug}
+                </Link>
+              ))}
+            </div>
+          }
+          panels={{
+            hot: <FeedList posts={posts} reactions={reactions} />,
+            latest: <FeedList posts={latestPosts} reactions={reactions} />,
+            top: <FeedList posts={topPosts} reactions={reactions} />,
+          }}
+        />
       </div>
     </div>
   );
